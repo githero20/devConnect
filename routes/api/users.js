@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const gravatar = require("gravatar");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const config = require("config");
 const { check, validationResult } = require("express-validator");
 
 //bring in user model
@@ -25,6 +27,7 @@ router.post(
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.arrray() });
+      //add return before every res.status unless it's the last one, why?
     }
 
     const { name, email, password } = req.body;
@@ -65,8 +68,21 @@ router.post(
 
       //4. Return jsonwebtoken
       //return the jsonwebtoken so in the front end when a user registers they get logged in immediately
-
-      res.send("User registered");
+      const payload = {
+        user: {
+          id: user.id,
+          //with mongodb it'll be ._id, but mongoose uses an abstraction so .id
+        },
+      };
+      jwt.sign(
+        payload,
+        config.get("jwtSecret"),
+        { expiresIn: 360000 },
+        (err, token) => {
+          if (err) throw err;
+          res.json({ token });
+        }
+      );
     } catch (err) {
       console.error(err.message);
       res.status(500).send("Server error");

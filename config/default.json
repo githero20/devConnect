@@ -1,3 +1,4 @@
 {
-  "mongoURI": "mongodb+srv://mern-app:Ect8UHZFgcAiSyi6@omogbai-backup.iarbz.mongodb.net/myFirstDatabase?retryWrites=true&w=majority"
+  "mongoURI": "mongodb+srv://mern-app:Ect8UHZFgcAiSyi6@omogbai-backup.iarbz.mongodb.net/myFirstDatabase?retryWrites=true&w=majority",
+  "jwtSecret": "mysecrettoken"
 }
