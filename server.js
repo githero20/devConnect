@@ -9,6 +9,7 @@ connectDB();
 //Init Middleware
 app.use(express.json({ extended: false }));
 //express allows us initialize the middleware for the bodyparser
+//parses the json input
 
 app.get("/", (req, res) => res.send("API Running!"));
 
