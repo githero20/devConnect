@@ -5,29 +5,28 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const config = require("config");
 const { check, validationResult } = require("express-validator");
+const normalize = require("normalize-url");
 
 //bring in user model
 const User = require("../../models/User");
 
-//@route    GET api/users
+//@route    POST api/users
 //@desc     Register user
 //@access   Public
 
 router.post(
   "/",
-  [
-    check("name", "Name is required").not().isEmpty(),
-    check("email", "Please input a valid email").isEmail(),
-    check(
-      "password",
-      "Please input a password with 6 or more characters"
-    ).isLength({ min: 6 }),
-  ],
+  check("name", "Name is required").notEmpty(),
+  check("email", "Please input a valid email").isEmail(),
+  check(
+    "password",
+    "Please input a password with 6 or more characters"
+  ).isLength({ min: 6 }),
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.arrray() });
-      //add return before every res.status unless it's the last one, why?
+      //add return before every res.status unless it's the last one
     }
 
     const { name, email, password } = req.body;
@@ -77,7 +76,9 @@ router.post(
       jwt.sign(
         payload,
         config.get("jwtSecret"),
-        { expiresIn: 360000 },
+        //require config for the token above
+        { expiresIn: "5 days" },
+        // in production this should be 3600
         (err, token) => {
           if (err) throw err;
           res.json({ token });

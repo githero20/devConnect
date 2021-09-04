@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
-const auth = require("../../middleware/auth");
+const auth = require("../../middleware/auth"); //auth is redundant here
 const jwt = require("jsonwebtoken");
 const config = require("config");
 const { check, validationResult } = require("express-validator");
@@ -22,16 +22,14 @@ router.get("/", async (req, res) => {
   }
 });
 
-//@route    GET api/auth
+//@route    POST api/auth
 //@desc     Authenticate user & get token
 //@access   Public
 
 router.post(
   "/",
-  [
-    check("email", "Please input a valid email").isEmail(),
-    check("password", "Password is required").exists(),
-  ],
+  check("email", "Please input a valid email").isEmail(),
+  check("password", "Password is required").exists(),
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -53,7 +51,7 @@ router.post(
       //doing this so we get the same kind of error whether an input error or the user is already there
 
       const isMatch = await bcrypt.compare(password, user.password);
-      // bcrypt compare - compares a plain password and an encrypted one to see if they are the same.
+      // bcrypt compare - compares the plain password input and the encrypted one in the database to see if they are the same.
 
       if (!isMatch) {
         return res

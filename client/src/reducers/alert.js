@@ -1,4 +1,5 @@
 import { SET_ALERT, REMOVE_ALERT } from "../actions/types";
+// alert takes in a state and results in an action, which is dispersed from an action file.
 
 const initialState = [];
 

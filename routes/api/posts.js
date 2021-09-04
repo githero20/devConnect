@@ -5,25 +5,28 @@ const auth = require("../../middleware/auth");
 
 //bring in all the required models
 const Post = require("../../models/Post");
-const Profile = require("../../models/Profile");
+// const Profile = require("../../models/Profile");
 const User = require("../../models/User");
 const checkObjectId = require("../../middleware/checkObjectId");
 
-//@route    GET api/posts
-//@desc     Test route
-//@access   Public
+//@route    POST api/posts
+//@desc     Create a post
+//@access   Private
 
 router.post(
   "/",
-  (req, res) => [auth, [check("text", "Text is required").notEmpty()]],
+  auth,
+  check("text", "Text is required").notEmpty(),
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
       //error checking
     }
+
     try {
       const user = await User.findById(req.user.id).select("-password");
+      // this way we don't send the password back
 
       const newPost = new Post({
         text: req.body.text,
@@ -114,7 +117,7 @@ router.put("/like/:id", auth, checkObjectId("id"), async (req, res) => {
     if (post.likes.some((like) => like.user.toString() === req.user.id)) {
       return res.status(400).json({ msg: "Post already liked" });
     }
-    //this checks if the user.id has liked the post before, if it is then it gives the response
+    //this checks if the user.id has liked the post before, if it is then it returns the response
 
     post.likes.unshift({ user: req.user.id });
 

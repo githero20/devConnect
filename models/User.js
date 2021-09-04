@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 
 const UserSchema = new mongoose.Schema({
+  //Schema creates the various fields we want
   name: {
     type: String,
     required: true,

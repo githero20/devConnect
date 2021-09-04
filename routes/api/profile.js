@@ -69,6 +69,7 @@ router.post(
       skills: Array.isArray(skills)
         ? skills
         : skills.split(",").map((skill) => " " + skill.trim()),
+      // this turns it into an array, mapping each skill to the array 'skills'
       ...rest,
     };
 
@@ -141,12 +142,20 @@ router.get(
 // @access   Private
 router.delete("/", auth, async (req, res) => {
   try {
-    // @todo - remove users posts
+    // // @todo - remove users posts
+    // await Post.deleteMany({ user: req.user.id });
+    // // Remove profile
+    // await Profile.findOneAndRemove({ user: req.user.id });
+    // // Remove user
+    // await User.findOneAndRemove({ _id: req.user.id });
 
-    // Remove profile
-    await Profile.findOneAndRemove({ user: req.user.id });
-    // Remove user
-    await User.findOneAndRemove({ _id: req.user.id });
+    // Remove user posts, profile, user all at once with promise.all
+    await Promise.all([
+      Post.deleteMany({ user: req.user.id }),
+      Profile.findOneAndRemove({ user: req.user.id }),
+      User.findOneAndRemove({ _id: req.user.id }),
+      //user is not a field in the USer model, so we use _id.
+    ]);
 
     res.json({ msg: "User deleted" });
   } catch (err) {
@@ -160,38 +169,38 @@ router.delete("/", auth, async (req, res) => {
 // @access   Private
 router.put(
   "/experience",
-  [
-    auth,
-    [
-      check("title", "Title is required").notEmpty(),
-      check("company", "Company is required").notEmpty(),
-      check("from", "From date is required").notEmpty(),
-    ],
-  ],
+  auth,
+  check("title", "Title is required").notEmpty(),
+  check("company", "Company is required").notEmpty(),
+  check("from", "From date is required and needs to be from the past")
+    .notEmpty()
+    .custom((value, { req }) => (req.body.to ? value < req.body.to : true)),
+  // this line above literally checks if the date is from the past
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { title, company, location, from, to, current, descrption } =
-      req.body;
+    // const { title, company, location, from, to, current, descrption } =
+    //   req.body;
 
-    const newExp = {
-      title,
-      company,
-      location,
-      from,
-      to,
-      current,
-      description,
-    };
+    // const newExp = {
+    //   title,
+    //   company,
+    //   location,
+    //   from,
+    //   to,
+    //   current,
+    //   description,
+    // };
     // same as - title : title,
     //the above creates an object with the data the user submits.
 
     try {
       const profile = await Profile.findOne({ user: req.user.id });
-      profile.experience.unshift(newExp);
+      // profile.experience.unshift(newExp);
+      profile.experience.unshift(req.body);
       //remember the difference between push and unshift
       await profile.save();
       res.json(profile);
@@ -205,93 +214,42 @@ router.put(
 // @route    DELETE api/profile/experience/:exp_id
 // @desc     Delete experience from profile
 // @access   Private
-router.delete("/experience/:exp_id", auth, async (req, res) => {
-  try {
-    const profile = await Profile.findOne({ user: req.user.id });
+// router.delete("/experience/:exp_id", auth, async (req, res) => {
+//   try {
+//     const profile = await Profile.findOne({ user: req.user.id });
 
-    // Get remove index {we want to get the specific experience to remove}
-    const removeIndex = profile.experience
-      .map((item) => item.id)
-      .indexOf(req.params.exp_id);
+//     // Get remove index {we want to get the specific experience to remove}
+//     const removeIndex = profile.experience
+//       .map((item) => item.id)
+//       .indexOf(req.params.exp_id);
 
-    profile.experience.splice(removeIndex, 1);
+//     profile.experience.splice(removeIndex, 1);
 
-    await profile.save();
-    res.json(profile);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server Error");
-  }
-});
-
-// @route    PUT api/profile/education
-// @desc     Add profile education
-// @access   Private
-router.put(
-  "/education",
-  [
-    auth,
-    [
-      check("school", "School is required").notEmpty(),
-      check("degree", "Degree is required").notEmpty(),
-      check("fieldofstudy", "Field of study is required").notEmpty(),
-      check("from", "From date is required").notEmpty(),
-      //seems like .not().isEmpty() can be replaced by .notEmpty()
-    ],
-  ],
-  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { title, company, location, from, to, current, descrption } =
-      req.body;
-
-    const newExp = {
-      SpeechRecognitionResult,
-      company,
-      location,
-      from,
-      to,
-      current,
-      description,
-    };
-    // same as - title : title,
-    //the above creates an object with the data the user submits.
-
-    try {
-      const profile = await Profile.findOne({ user: req.user.id });
-      profile.experience.unshift(newExp);
-      //remember the difference between push and unshift
-      await profile.save();
-      res.json(profile);
-    } catch (err) {
-      console.error(err.message);
-      res.status(500).send("Server Error");
-    }
-  }
-);
+//     await profile.save();
+//     res.json(profile);
+//   } catch (err) {
+//     console.error(err.message);
+//     res.status(500).send("Server Error");
+//   }
+// });
 
 // @route    DELETE api/profile/experience/:exp_id
 // @desc     Delete experience from profile
 // @access   Private
 router.delete("/experience/:exp_id", auth, async (req, res) => {
   try {
-    const profile = await Profile.findOne({ user: req.user.id });
+    const foundProfile = await Profile.findOne({ user: req.user.id });
 
-    // Get remove index {we want to get the specific experience to remove}
-    const removeIndex = profile.experience
-      .map((item) => item.id)
-      .indexOf(req.params.exp_id);
+    // To get the correct experience to remove, get remove index
+    foundProfile.experience = foundProfile.experience.filter(
+      (exp) => exp._id.toString() !== req.params.exp_id
+    );
 
-    profile.experience.splice(removeIndex, 1);
-
-    await profile.save();
-    res.json(profile);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server Error");
+    await foundProfile.save();
+    return res.status(200).json(foundProfile);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ msg: "Server error" });
   }
 });
 
@@ -307,19 +265,34 @@ router.put(
   check("from", "From date is required and needs to be from the past")
     .notEmpty()
     .custom((value, { req }) => (req.body.to ? value < req.body.to : true)),
+  //seems like .not().isEmpty() can be replaced by .notEmpty()
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
 
+    // const { title, company, location, from, to, current, descrption } =
+    //   req.body;
+
+    // const newExp = {
+    //   SpeechRecognitionResult,
+    //   company,
+    //   location,
+    //   from,
+    //   to,
+    //   current,
+    //   description,
+    // };
+    // // same as - title : title,
+    // //the above creates an object with the data the user submits.
+
     try {
       const profile = await Profile.findOne({ user: req.user.id });
-
-      profile.education.unshift(req.body);
+      profile.education.unshift(reg.body);
+      //remember the difference between push and unshift
 
       await profile.save();
-
       res.json(profile);
     } catch (err) {
       console.error(err.message);

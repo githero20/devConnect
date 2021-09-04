@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 const PostSchema = new Schema({
   user: {
     type: Schema.Types.ObjectId,
-    ref: "users",
+    // ref: "users",
     //this way we know which post came from which user
   },
   text: {
@@ -21,6 +21,7 @@ const PostSchema = new Schema({
     {
       user: {
         type: Schema.Types.ObjectId,
+        // only one like per user
       },
     },
   ],
