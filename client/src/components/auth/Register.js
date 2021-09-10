@@ -68,6 +68,9 @@ const Register = ({ setAlert, register, isAuthenticated }) => {
             value={password}
             onChange={onChange}
           />
+          <small className="form-text">
+            Password should be a minimum of 6 characters
+          </small>
         </div>
         <div className="form-group">
           <input

@@ -43,11 +43,14 @@ router.post(
       //doing this so we get the same kind of error whether an input error or the user is already there
 
       //2. Get users gravatar
-      const avatar = gravatar.url(email, {
-        s: "200", //size
-        r: "pg", //rating
-        d: "mm", //default image icon
-      });
+      const avatar = normalize(
+        gravatar.url(email, {
+          s: "200", //size
+          r: "pg", //rating
+          d: "mm", //default image icon
+        }),
+        { forceHttps: true }
+      );
 
       user = new User({
         name,
